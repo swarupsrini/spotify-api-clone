@@ -124,8 +124,22 @@ public class SongController {
 			@RequestParam("shouldDecrement") String shouldDecrement, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("data", String.format("PUT %s", Utils.getUrl(request)));
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+		
+		boolean b;
+		if (shouldDecrement.equals("true")) b = true;
+		else if (shouldDecrement.equals("false")) b = false;
+		else {
+			response.put("status", HttpStatus.BAD_REQUEST);
+			response.put("message", "Invalid shouldDecrement value!");
+			return response;
+		}
+		
+		DbQueryStatus dbQueryStatus = songDal.updateSongFavouritesCount(songId, b);
 
-		return null;
+		response.put("message", dbQueryStatus.getMessage());
+		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+
+		return response;
 	}
 }
