@@ -103,8 +103,19 @@ public class SongController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
-
-		return null;
+		
+		// validating if params contains necessary parameters for a Song object, if not, return a BAD_REQUEST code
+		String songName=null, songArtist=null, songAlbum=null;
+		if ((songName = params.get("songName")) == null || (songArtist = params.get("songArtistFullName")) == null || (songAlbum = params.get("songAlbum")) == null) {
+			response.put("status", HttpStatus.BAD_REQUEST);
+			return response;
+		}
+		
+		DbQueryStatus dbQueryStatus = songDal.addSong(new Song(songName, songArtist, songAlbum));
+		response.put("message", dbQueryStatus.getMessage());
+		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+		
+		return response;
 	}
 
 	
