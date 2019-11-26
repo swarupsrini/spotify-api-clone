@@ -24,43 +24,53 @@ public class SongDalImpl implements SongDal {
 	@Override
 	public DbQueryStatus addSong(Song songToAdd) {
 		DbQueryStatus status = new DbQueryStatus("Added song to DB", DbQueryExecResult.QUERY_OK);
-		
+//		this.db.insert(songToAdd);
+		return status;
 	}
 
 	@Override
 	public DbQueryStatus findSongById(String songId) {
 		DbQueryStatus status = new DbQueryStatus("Found song from DB", DbQueryExecResult.QUERY_OK);
-		List<Song> res = this.db.find(new Query(where("_id").is(songId)), Song.class);
-		System.out.println(res);
-		if (res.size() > 0) {
-			status.setData(res.get(0));
+		Song res = this.db.findById(songId, Song.class);
+//		List<Song> res = this.db.find(new Query(where("_id").is(songId)), Song.class);
+//		System.out.println(res);
+		if (res != null) {
+			status.setData(res);
 		}
 		else {
 			status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-			status.setMessage("NOT_FOUND");
+			status.setMessage("Song ID not found in DB");
 		}
 		return status;
 	}
 
 	@Override
 	public DbQueryStatus getSongTitleById(String songId) {
-		DbQueryStatus status = new DbQueryStatus("", DbQueryExecResult.QUERY_OK);
-		List<Song> res = this.db.find(new Query(where("_id").is(songId)), Song.class);
-		System.out.println(res);
-		if (res.size() > 0) {
-			status.setData(res.get(0).getSongName());
+		DbQueryStatus status = new DbQueryStatus("Found song title from DB", DbQueryExecResult.QUERY_OK);
+		Song res = this.db.findById(songId, Song.class);
+		if (res != null) {
+			status.setData(res.getSongName());
 		}
 		else {
 			status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-			status.setMessage("NOT_FOUND");
+			status.setMessage("Song ID not found in DB");
 		}
 		return status;
 	}
 
 	@Override
 	public DbQueryStatus deleteSongById(String songId) {
-		// TODO Auto-generated method stub
-		return null;
+		DbQueryStatus status = new DbQueryStatus("Deleted song from DB", DbQueryExecResult.QUERY_OK);
+		Song res = this.db.findById(songId, Song.class);
+		System.out.println(res);
+		if (res != null) {
+			this.db.remove(res);
+		}
+		else {
+			status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+			status.setMessage("Song ID not found in DB");
+		}
+		return status;
 	}
 
 	@Override
