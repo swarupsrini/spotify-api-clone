@@ -47,23 +47,23 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/profile", method = RequestMethod.POST)
-	public @ResponseBody Map<String, Object> addSong(@RequestParam Map<String, String> params,
+	public @ResponseBody Map<String, Object> addProfile(@RequestParam Map<String, String> params,
 			HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
-
-		return null;
+        response.put("status",  profileDriver.createUserProfile(params.get("userName"), params.get("fullName"), params.get("password")).getdbQueryExecResult());
+        return response;
 	}
 
 	@RequestMapping(value = "/followFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> followFriend(@PathVariable("userName") String userName,
 			@PathVariable("friendUserName") String friendUserName, HttpServletRequest request) {
 
-		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		
-		return null;
+	  Map<String, Object> response = new HashMap<String, Object>();
+      response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+      response.put("status",  profileDriver.followFriend(userName, friendUserName).getdbQueryExecResult());
+      return response;
 	}
 
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)
@@ -72,8 +72,11 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-
-		return null;
+		
+		DbQueryStatus songList = profileDriver.getAllSongFriendsLike(userName);
+	    response.put("status",  songList.getdbQueryExecResult());
+	    response.put("data", songList.getData());
+		return response;
 	}
 
 
@@ -81,10 +84,10 @@ public class ProfileController {
 	public @ResponseBody Map<String, Object> unfollowFriend(@PathVariable("userName") String userName,
 			@PathVariable("friendUserName") String friendUserName, HttpServletRequest request) {
 
-		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-
-		return null;
+      Map<String, Object> response = new HashMap<String, Object>();
+      response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+      response.put("status",  profileDriver.unfollowFriend(userName, friendUserName).getdbQueryExecResult());
+      return response;
 	}
 
 	@RequestMapping(value = "/likeSong/{userName}/{songId}", method = RequestMethod.PUT)
@@ -93,8 +96,8 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-
-		return null;
+	    response.put("status",  playlistDriver.likeSong(userName, songId).getdbQueryExecResult());
+	    return response;
 	}
 
 	@RequestMapping(value = "/unlikeSong/{userName}/{songId}", method = RequestMethod.PUT)
@@ -103,8 +106,8 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-
-		return null;
+        response.put("status",  playlistDriver.unlikeSong(userName, songId).getdbQueryExecResult());
+		return response;
 	}
 
 	@RequestMapping(value = "/deleteAllSongsFromDb/{songId}", method = RequestMethod.PUT)
@@ -113,7 +116,7 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		
-		return null;
+        response.put("status",  playlistDriver.deleteSongFromDb(songId).getdbQueryExecResult());
+		return response;
 	}
 }
