@@ -41,7 +41,7 @@ public class ProfileDriverImpl implements ProfileDriver {
   @Override
   public DbQueryStatus createUserProfile(String userName, String fullName, String password) {
     DbQueryStatus newProfile = null;
-    if (userName == null || fullName == null || password == null) {
+    if (userName == null || fullName == null || password == null || userName.equals("") || fullName.equals("") || password.equals("")) {
       newProfile = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
       return newProfile;
     }
@@ -73,7 +73,7 @@ public class ProfileDriverImpl implements ProfileDriver {
   public DbQueryStatus followFriend(String userName, String friendUserName) {
     DbQueryStatus status = null;
 
-    if (userName == null || friendUserName == null || (userName == friendUserName)) {
+    if (userName == null || friendUserName == null || (userName == friendUserName) || userName.equals("") || friendUserName.equals("")) {
       status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
       return status;
     }
