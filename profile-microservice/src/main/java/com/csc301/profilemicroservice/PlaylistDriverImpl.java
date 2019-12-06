@@ -28,7 +28,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
   @Override
   public DbQueryStatus likeSong(String userName, String songId) {
     DbQueryStatus status = null;
-
+    boolean song_exists = true;
     if (userName == null || songId == null) {
       status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
       return status;
@@ -47,8 +47,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
         return status;
       }
       if (!result2.hasNext()) {
-        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-        return status;
+        song_exists = false;
       }
     }
 
@@ -60,13 +59,21 @@ public class PlaylistDriverImpl implements PlaylistDriver {
               + "RETURN relate", Values.parameters("user", userName, "Id", songId));
 
       if (result.hasNext()) {
-        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+        status = new DbQueryStatus("don't increment", DbQueryExecResult.QUERY_OK);
         return status;
       }
     }
 
     try (Session session = driver.session()) {
-
+      if(song_exists == false) {
+        try (Transaction tx = session.beginTransaction()) {
+          tx.run(
+              "CREATE (:song{songId: {Id}})",
+              Values.parameters("Id", songId));
+          tx.success();
+        }
+      }
+      
       try (Transaction tx = session.beginTransaction()) {
         tx.run(
             "MATCH ( : profile{userName:{user}})-[:created]->(type :playlist)"
