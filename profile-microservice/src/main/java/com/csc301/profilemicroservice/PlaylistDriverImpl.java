@@ -59,7 +59,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
               + "RETURN relate", Values.parameters("user", userName, "Id", songId));
 
       if (result.hasNext()) {
-        status = new DbQueryStatus("don't increment", DbQueryExecResult.QUERY_OK);
+        status = new DbQueryStatus("", DbQueryExecResult.QUERY_OK);
         return status;
       }
     }
@@ -80,7 +80,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
                 + "MATCH (uniq: song{songId:{Id}})" + "CREATE (type)-[:includes]->(uniq)",
             Values.parameters("user", userName, "Id", songId));
         tx.success();
-        status = new DbQueryStatus("", DbQueryExecResult.QUERY_OK);
+        status = new DbQueryStatus("increment", DbQueryExecResult.QUERY_OK);
       }
     }
 
@@ -100,15 +100,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
       StatementResult result =
           session.run("MATCH ( user1: profile{userName:{user}} )" + "RETURN user1",
               Values.parameters("user", userName));
-
-      StatementResult result2 = session.run("MATCH (songs: song{songId:{Id}} )" + "RETURN songs",
-          Values.parameters("Id", songId));
-
       if (!result.hasNext()) {
-        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-        return status;
-      }
-      if (!result2.hasNext()) {
         status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
         return status;
       }
@@ -134,7 +126,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
             + "MATCH (uniq: song{songId:{Id}})" + "MATCH (type)-[favourite: includes]->(uniq)"
             + "DELETE favourite", Values.parameters("user", userName, "Id", songId));
         tx.success();
-        status = new DbQueryStatus("", DbQueryExecResult.QUERY_OK);
+        status = new DbQueryStatus("decrement", DbQueryExecResult.QUERY_OK);
       }
     }
 

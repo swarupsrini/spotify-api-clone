@@ -92,17 +92,54 @@ public class ProfileController {
 
     Map<String, Object> response = new HashMap<String, Object>();
     response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-    response.put("status", playlistDriver.likeSong(userName, songId).getdbQueryExecResult());
+    Utils.setResponseStatus(response, playlistDriver.likeSong(userName, songId).getdbQueryExecResult(), null);
+    
+    if (playlistDriver.likeSong(userName, songId).getMessage().equals("increment")) {
+      Request toSend = new Request.Builder()
+          .url("http://localhost:3001//updateSongFavouritesCount/"+songId+"?shouldDecrement=false")
+      //      .put()
+              .build();
+      try (Response sentResp = this.client.newCall(toSend).execute()){
+      } catch (IOException e) {
+          e.printStackTrace();
+      } 
+    }
+    
     return response;
   }
 
   @RequestMapping(value = "/unlikeSong/{userName}/{songId}", method = RequestMethod.PUT)
   public @ResponseBody Map<String, Object> unlikeSong(@PathVariable("userName") String userName,
       @PathVariable("songId") String songId, HttpServletRequest request) {
-
+    
     Map<String, Object> response = new HashMap<String, Object>();
     response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-    response.put("status", playlistDriver.unlikeSong(userName, songId).getdbQueryExecResult());
+    
+    Request check = new Request.Builder()
+        .url("http://localhost:3001/getSongById/"+songId)
+    //      .put()
+            .build();
+    try (Response sentResp = this.client.newCall(check).execute()){
+      String body = sentResp.body().string();
+      
+      
+    } catch (IOException e) {
+        e.printStackTrace();
+    } 
+    
+    Utils.setResponseStatus(response, playlistDriver.unlikeSong(userName, songId).getdbQueryExecResult(), null);
+    
+    if (playlistDriver.unlikeSong(userName, songId).getMessage().equals("decrement")) {
+      Request toSend = new Request.Builder()
+          .url("http://localhost:3001//updateSongFavouritesCount/"+songId+"?shouldDecrement=true")
+      //      .put()
+              .build();
+      try (Response sentResp = this.client.newCall(toSend).execute()){
+      } catch (IOException e) {
+          e.printStackTrace();
+      } 
+    }
+    
     return response;
   }
 
