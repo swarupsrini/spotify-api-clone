@@ -142,7 +142,7 @@ public class ProfileDriverImpl implements ProfileDriver {
   @Override
   public DbQueryStatus getAllSongFriendsLike(String userName) {
     DbQueryStatus songList = null;
-    ArrayList<String> data = new ArrayList<String>();
+    Map<String, ArrayList<String>> data = new HashMap<String, ArrayList<String>>();
 
     if (userName == null) {
       songList = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
@@ -152,13 +152,23 @@ public class ProfileDriverImpl implements ProfileDriver {
 
     try (Session session = driver.session()) {
       StatementResult result = session.run(
-          "MATCH (me: profile{userName:{user}}) -[:follows]-> (: profile) -[: created]-> (:playlist) -[:includes]-> (songs: song)"
-              + "RETURN DISTINCT songs",
+          "MATCH (me: profile{userName:{user}}) -[:follows]-> (friends: profile) RETURN friends",
           Values.parameters("user", userName));
       while (result.hasNext()) {
-
-        Record song = result.next();
-        data.add((String) song.fields().get(0).value().asMap().get("songId"));
+        Record friends = result.next();
+        ArrayList<String> songNames = new ArrayList<String>();
+        String friendUser = (String) friends.fields().get(0).value().asMap().get("userName");
+        
+        StatementResult result2 = session.run(
+            "MATCH (me: profile{userName:{friend}}) -[:created]-> (: playlist) -[:includes]->( songs : song) RETURN songs",
+            Values.parameters("friend", friendUser));
+        
+        while(result2.hasNext()) {
+          Record songs = result2.next();
+          String temp = (String) songs.fields().get(0).value().asMap().get("songId");
+          songNames.add((String) songs.fields().get(0).value().asMap().get("songId"));
+        }
+        data.put((String) friends.fields().get(0).value().asMap().get("fullName"), songNames);
       }
       songList = new DbQueryStatus("", DbQueryExecResult.QUERY_OK);
       songList.setData(data);

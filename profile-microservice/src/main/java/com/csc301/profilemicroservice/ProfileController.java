@@ -1,5 +1,6 @@
 package com.csc301.profilemicroservice;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,8 +71,29 @@ public class ProfileController {
     response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
     DbQueryStatus songList = profileDriver.getAllSongFriendsLike(userName);
-    response.put("status", songList.getdbQueryExecResult());
-    response.put("data", songList.getData());
+    @SuppressWarnings("unchecked")
+    Map<String, ArrayList<String>> data = (Map<String, ArrayList<String>>) songList.getData();
+    System.out.println(data);
+    
+    for(String name: data.keySet()) {
+      ArrayList<String> change = new ArrayList<String>();
+      for(String songId: data.get(name)) {
+        
+        Request toSend = new Request.Builder()
+            .url("http://localhost:3001/getSongTitleById/"+songId)
+                .build();
+        try (Response sentResp = this.client.newCall(toSend).execute()){
+          String body = sentResp.body().string();
+          JSONObject a = new JSONObject(body);
+          change.add((String) a.get("data"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } 
+      }
+      data.replace(name, change);
+    }
+    Utils.setResponseStatus(response, songList.getdbQueryExecResult(), data);
+
     return response;
   }
 
@@ -92,14 +114,35 @@ public class ProfileController {
 
     Map<String, Object> response = new HashMap<String, Object>();
     response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+    
+    Request check = new Request.Builder()
+        .url("http://localhost:3001/getSongById/"+songId)
+            .build();
+    try (Response sentResp = this.client.newCall(check).execute()){
+      String body = sentResp.body().string();
+      JSONObject a = new JSONObject(body);
+      if(!(a.get("status").equals("OK"))) {
+        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_GENERIC, null);
+        return response;
+      }
+    } catch (IOException e) {
+        e.printStackTrace();
+    } 
+    
     Utils.setResponseStatus(response, playlistDriver.likeSong(userName, songId).getdbQueryExecResult(), null);
     
     if (playlistDriver.likeSong(userName, songId).getMessage().equals("increment")) {
       Request toSend = new Request.Builder()
-          .url("http://localhost:3001//updateSongFavouritesCount/"+songId+"?shouldDecrement=false")
+          .url("http://localhost:3001/updateSongFavouritesCount/"+songId+"?shouldDecrement=false")
       //      .put()
               .build();
       try (Response sentResp = this.client.newCall(toSend).execute()){
+        String body = sentResp.body().string();
+        JSONObject a = new JSONObject(body);
+        if(!(a.get("status").equals("OK"))) {
+          Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_GENERIC, null);
+          return response;
+        }
       } catch (IOException e) {
           e.printStackTrace();
       } 
@@ -121,6 +164,11 @@ public class ProfileController {
             .build();
     try (Response sentResp = this.client.newCall(check).execute()){
       String body = sentResp.body().string();
+      JSONObject a = new JSONObject(body);
+      if(!(a.get("status").equals("OK"))) {
+        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_GENERIC, null);
+        return response;
+      }
       
       
     } catch (IOException e) {
@@ -131,7 +179,7 @@ public class ProfileController {
     
     if (playlistDriver.unlikeSong(userName, songId).getMessage().equals("decrement")) {
       Request toSend = new Request.Builder()
-          .url("http://localhost:3001//updateSongFavouritesCount/"+songId+"?shouldDecrement=true")
+          .url("http://localhost:3001/updateSongFavouritesCount/"+songId+"?shouldDecrement=true")
       //      .put()
               .build();
       try (Response sentResp = this.client.newCall(toSend).execute()){
@@ -149,7 +197,23 @@ public class ProfileController {
 
     Map<String, Object> response = new HashMap<String, Object>();
     response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-    response.put("status", playlistDriver.deleteSongFromDb(songId).getdbQueryExecResult());
+    
+    Request check = new Request.Builder()
+        .url("http://localhost:3001/getSongById/"+songId)
+            .build();
+    try (Response sentResp = this.client.newCall(check).execute()){
+      String body = sentResp.body().string();
+      JSONObject a = new JSONObject(body);
+      if(!(a.get("status").equals("OK"))) {
+        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_GENERIC, null);
+        return response;
+      }
+    } catch (IOException e) {
+        e.printStackTrace();
+    } 
+    
+    Utils.setResponseStatus(response, playlistDriver.deleteSongFromDb(songId).getdbQueryExecResult(), null);
+
     return response;
   }
 }
