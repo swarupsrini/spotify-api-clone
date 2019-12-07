@@ -140,15 +140,15 @@ public class PlaylistDriverImpl implements PlaylistDriver {
       status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
       return status;
     }
-    try (Session session = driver.session()) {
-      StatementResult result2 = session.run("MATCH (songs: song{songId:{Id}}) RETURN songs",
-          Values.parameters("Id", songId));
-      
-      if (!result2.hasNext()) {
-        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-        return status;
-      }
-    }
+//    try (Session session = driver.session()) {
+//      StatementResult result2 = session.run("MATCH (songs: song{songId:{Id}}) RETURN songs",
+//          Values.parameters("Id", songId));
+//      
+//      if (!result2.hasNext()) {
+//        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+//        return status;
+//      }
+//    }
     
     try (Session session = driver.session()) {
 
