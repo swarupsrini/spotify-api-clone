@@ -137,7 +137,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
   public DbQueryStatus deleteSongFromDb(String songId) {
     DbQueryStatus status = null;
     if(songId == null) {
-      status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_GENERIC);
+      status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
       return status;
     }
     try (Session session = driver.session()) {

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.csc301.profilemicroservice.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.Call;
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -71,6 +72,13 @@ public class ProfileController {
     response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
     DbQueryStatus songList = profileDriver.getAllSongFriendsLike(userName);
+    
+    if(songList.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_ERROR_NOT_FOUND)) {
+      
+      Utils.setResponseStatus(response, songList.getdbQueryExecResult(), null);
+      return response;
+    }
+    
     @SuppressWarnings("unchecked")
     Map<String, ArrayList<String>> data = (Map<String, ArrayList<String>>) songList.getData();
     System.out.println(data);
@@ -122,25 +130,28 @@ public class ProfileController {
       String body = sentResp.body().string();
       JSONObject a = new JSONObject(body);
       if(!(a.get("status").equals("OK"))) {
-        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_GENERIC, null);
+        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_NOT_FOUND, null);
         return response;
       }
     } catch (IOException e) {
         e.printStackTrace();
     } 
     
-    Utils.setResponseStatus(response, playlistDriver.likeSong(userName, songId).getdbQueryExecResult(), null);
     
-    if (playlistDriver.likeSong(userName, songId).getMessage().equals("increment")) {
+    
+    DbQueryStatus stat = playlistDriver.likeSong(userName, songId);
+    Utils.setResponseStatus(response, stat.getdbQueryExecResult(), null);
+    
+    if (stat.getMessage().equals("increment")) {
       Request toSend = new Request.Builder()
           .url("http://localhost:3001/updateSongFavouritesCount/"+songId+"?shouldDecrement=false")
-      //      .put()
+              .put(new FormBody.Builder().build())
               .build();
       try (Response sentResp = this.client.newCall(toSend).execute()){
         String body = sentResp.body().string();
         JSONObject a = new JSONObject(body);
         if(!(a.get("status").equals("OK"))) {
-          Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_GENERIC, null);
+          Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_NOT_FOUND, null);
           return response;
         }
       } catch (IOException e) {
@@ -157,16 +168,15 @@ public class ProfileController {
     
     Map<String, Object> response = new HashMap<String, Object>();
     response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-    
+    System.out.println("1");
     Request check = new Request.Builder()
         .url("http://localhost:3001/getSongById/"+songId)
-    //      .put()
             .build();
     try (Response sentResp = this.client.newCall(check).execute()){
       String body = sentResp.body().string();
       JSONObject a = new JSONObject(body);
       if(!(a.get("status").equals("OK"))) {
-        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_GENERIC, null);
+        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_NOT_FOUND, null);
         return response;
       }
       
@@ -174,15 +184,24 @@ public class ProfileController {
     } catch (IOException e) {
         e.printStackTrace();
     } 
+    DbQueryStatus stat = playlistDriver.unlikeSong(userName, songId);
+    Utils.setResponseStatus(response, stat.getdbQueryExecResult(), null);
     
-    Utils.setResponseStatus(response, playlistDriver.unlikeSong(userName, songId).getdbQueryExecResult(), null);
-    
-    if (playlistDriver.unlikeSong(userName, songId).getMessage().equals("decrement")) {
+    if (stat.getMessage().equals("decrement")) {
+      System.out.println("2");
+
       Request toSend = new Request.Builder()
           .url("http://localhost:3001/updateSongFavouritesCount/"+songId+"?shouldDecrement=true")
-      //      .put()
+              .put(new FormBody.Builder().build())
               .build();
       try (Response sentResp = this.client.newCall(toSend).execute()){
+        String body = sentResp.body().string();
+        JSONObject a = new JSONObject(body);
+        System.out.println(body);
+        if(!(a.get("status").equals("OK"))) {
+          Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_NOT_FOUND, null);
+          return response;
+        }
       } catch (IOException e) {
           e.printStackTrace();
       } 
@@ -198,19 +217,19 @@ public class ProfileController {
     Map<String, Object> response = new HashMap<String, Object>();
     response.put("path", String.format("PUT %s", Utils.getUrl(request)));
     
-    Request check = new Request.Builder()
-        .url("http://localhost:3001/getSongById/"+songId)
-            .build();
-    try (Response sentResp = this.client.newCall(check).execute()){
-      String body = sentResp.body().string();
-      JSONObject a = new JSONObject(body);
-      if(!(a.get("status").equals("OK"))) {
-        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_GENERIC, null);
-        return response;
-      }
-    } catch (IOException e) {
-        e.printStackTrace();
-    } 
+//    Request check = new Request.Builder()
+//        .url("http://localhost:3001/getSongById/"+songId)
+//            .build();
+//    try (Response sentResp = this.client.newCall(check).execute()){
+//      String body = sentResp.body().string();
+//      JSONObject a = new JSONObject(body);
+//      if(!(a.get("status").equals("OK"))) {
+//        Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_NOT_FOUND, null);
+//        return response;
+//      }
+//    } catch (IOException e) {
+//        e.printStackTrace();
+//    } 
     
     Utils.setResponseStatus(response, playlistDriver.deleteSongFromDb(songId).getdbQueryExecResult(), null);
 

@@ -51,7 +51,7 @@ public class ProfileDriverImpl implements ProfileDriver {
           session.run("MATCH (nProfile: profile{ userName: {user} }) RETURN nProfile",
               Values.parameters("user", userName));
       if (result.hasNext()) {
-        newProfile = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_GENERIC);
+        newProfile = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
         return newProfile;
       }
     }
@@ -72,11 +72,30 @@ public class ProfileDriverImpl implements ProfileDriver {
   @Override
   public DbQueryStatus followFriend(String userName, String friendUserName) {
     DbQueryStatus status = null;
-
-    if (userName == null || friendUserName == null || (userName == friendUserName) || userName.equals("") || friendUserName.equals("")) {
+    if (userName == null || friendUserName == null || (userName.equals(friendUserName)) || userName.equals("") || friendUserName.equals("")) {
       status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
       return status;
     }
+    
+    try (Session session = driver.session()) {
+      StatementResult result =
+          session.run("MATCH (nProfile: profile{ userName: {user} }) RETURN nProfile",
+              Values.parameters("user", userName));
+      if (!result.hasNext()) {
+        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+        return status;
+      }
+    }
+    try (Session session = driver.session()) {
+      StatementResult result =
+          session.run("MATCH (nProfile: profile{ userName: {user} }) RETURN nProfile",
+              Values.parameters("user", friendUserName));
+      if (!result.hasNext()) {
+        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+        return status;
+      }
+    }
+    
     try (Session session = driver.session()) {
       StatementResult result = session.run(
           "MATCH (user: profile{userName:{follower}}) -[r: follows]-> (friend: profile{userName:{followed}})"
@@ -84,7 +103,7 @@ public class ProfileDriverImpl implements ProfileDriver {
           Values.parameters("follower", userName, "followed", friendUserName));
 
       if (result.hasNext()) {
-        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_GENERIC);
+        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
         return status;
       }
     }
@@ -109,11 +128,32 @@ public class ProfileDriverImpl implements ProfileDriver {
   public DbQueryStatus unfollowFriend(String userName, String friendUserName) {
     DbQueryStatus status = null;
 
-    if (userName == null || friendUserName == null || (userName == friendUserName)) {
+    if (userName == null || friendUserName == null || (userName.equals(friendUserName))) {
       status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
       return status;
     }
-
+    
+    try (Session session = driver.session()) {
+      StatementResult result =
+          session.run("MATCH (nProfile: profile{ userName: {user} }) RETURN nProfile",
+              Values.parameters("user", userName));
+      if (!result.hasNext()) {
+        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+        return status;
+      }
+    }
+    
+    try (Session session = driver.session()) {
+      StatementResult result =
+          session.run("MATCH (nProfile: profile{ userName: {user} }) RETURN nProfile",
+              Values.parameters("user", friendUserName));
+      if (!result.hasNext()) {
+        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+        return status;
+      }
+    }
+    
+    
     try (Session session = driver.session()) {
       StatementResult result = session.run(
           "MATCH (user: profile{userName:{follower}}) -[r: follows]-> (friend: profile{userName:{followed}})"
@@ -121,7 +161,7 @@ public class ProfileDriverImpl implements ProfileDriver {
           Values.parameters("follower", userName, "followed", friendUserName));
 
       if (!(result.hasNext())) {
-        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_GENERIC);
+        status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
         return status;
       }
     }
@@ -149,7 +189,17 @@ public class ProfileDriverImpl implements ProfileDriver {
       songList.setData(data);
       return songList;
     }
-
+    
+    try (Session session = driver.session()) {
+      StatementResult result =
+          session.run("MATCH (nProfile: profile{ userName: {user} }) RETURN nProfile",
+              Values.parameters("user", userName));
+      if (!result.hasNext()) {
+        songList = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+        return songList;
+      }
+    }
+    
     try (Session session = driver.session()) {
       StatementResult result = session.run(
           "MATCH (me: profile{userName:{user}}) -[:follows]-> (friends: profile) RETURN friends",

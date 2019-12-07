@@ -1,5 +1,6 @@
 package com.csc301.songmicroservice;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,13 +10,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import okhttp3.Call;
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -82,9 +81,16 @@ public class SongController {
 		
 		Request toSend = new Request.Builder()
 				.url("http://localhost:3002/deleteAllSongsFromDb/" + songId)
-//				.put()
+				.put(new FormBody.Builder().build())
 				.build();
 		try (Response sentResp = this.client.newCall(toSend).execute()){
+		  String body = sentResp.body().string();
+	        JSONObject a = new JSONObject(body);
+	        System.out.println(body);
+	        if(!(a.get("status").equals("OK"))) {
+	          Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_NOT_FOUND, null);
+	          return response;
+	        }
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
